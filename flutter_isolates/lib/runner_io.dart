@@ -1,18 +1,10 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'src/core/presentation/app.dart';
-
+import 'src/core/utils/errors_handler_implementation.dart';
 
 void run() {
-  FlutterError.onError = (details) {
-    FlutterError.presentError(details);
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-    print('Error: $error\n\nStacktrace: $stack');
-    return true;
-  };
+  MyAppErrorsHandler().setupHandler();
 
   runApp(const IsolatesApp());
 }
