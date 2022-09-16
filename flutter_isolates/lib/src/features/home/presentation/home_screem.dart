@@ -29,7 +29,3 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
-
-void someFunc() {
-
-}
