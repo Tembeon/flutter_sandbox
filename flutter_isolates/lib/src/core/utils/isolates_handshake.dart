@@ -19,6 +19,10 @@ Future<SendPort> initIsolate({
   required void Function(Object? data, SendPort port)
       onChildIsolateDataReceived,
 
+  /// Called when child isolate is already closed and main isolate is about to
+  /// stop listening.
+  void Function()? onIsolateClosed,
+
   /// When both isolates received this String, they will be stopped.
   required String stopWhenReceived,
 
@@ -39,6 +43,8 @@ Future<SendPort> initIsolate({
       childIsolateSendPort.complete(data);
     } else {
       if (data is String && data == stopWhenReceived) {
+        // do users handler before cancel listening
+        onIsolateClosed?.call();
         // stop word, cancel listening
         sub.cancel();
       } else {
@@ -50,8 +56,8 @@ Future<SendPort> initIsolate({
 
   // create child isolate and pass arguments
   await Isolate.spawn(
-    _createChildIsolate,
-    _SendObject(
+    createChildIsolate,
+    SendData(
       mainIsolateReceivePort.sendPort,
       onChildIsolateDataReceived,
       stopWhenReceived: stopWhenReceived,
@@ -64,33 +70,33 @@ Future<SendPort> initIsolate({
 }
 
 // Creates child isolate with passed arguments.
-void _createChildIsolate(_SendObject object) {
+void createChildIsolate(SendData sendData) {
   // child isolate ReceivePort.
   final childIsolateReceivePort = ReceivePort();
 
   // main isolate SendPort, use to send data.
-  final mainIsolateSendPort = object.sendPort;
+  final mainIsolateSendPort = sendData.sendPort;
 
-  Isolate.current.setErrorsFatal(object.errorsAreFatal);
+  Isolate.current.setErrorsFatal(sendData.errorsAreFatal);
 
   // returning SendPort of child isolate to send data to this isolate.
   mainIsolateSendPort.send(childIsolateReceivePort.sendPort);
 
   // listening to new data from main isolate
   childIsolateReceivePort.listen((Object? data) {
-    if (data is String && data == object.stopWhenReceived) {
+    if (data is String && data == sendData.stopWhenReceived) {
       // send stop word to main isolate and kill this isolate
-      mainIsolateSendPort.send(object.stopWhenReceived);
+      mainIsolateSendPort.send(sendData.stopWhenReceived);
       Isolate.current.kill();
     } else {
       // pass data to user handler
-      object.proceedData.call(data, mainIsolateSendPort);
+      sendData.proceedData.call(data, mainIsolateSendPort);
     }
   });
 }
 
-class _SendObject {
-  _SendObject(
+class SendData {
+  SendData(
     this.sendPort,
     this.proceedData, {
     required this.stopWhenReceived,
