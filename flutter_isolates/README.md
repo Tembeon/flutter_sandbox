@@ -8,5 +8,22 @@ Sample app to work with isolates.
 
 Folder structure:
 ```
-todo
+lib
+├── main.dart
+├── runner_io.dart
+├── runner_stub.dart
+├── runner_web.dart
+└── src
+    ├── core
+    │   ├── presentation
+    │   │   └── app.dart
+    │   └── utils
+    │       ├── errors_handler.dart
+    │       ├── errors_handler_implementation.dart
+    │       └── isolates_handshake.dart
+    └── features
+        └── home
+            └── presentation
+                ├── home_logic.dart
+                └── home_screem.dart
 ```
